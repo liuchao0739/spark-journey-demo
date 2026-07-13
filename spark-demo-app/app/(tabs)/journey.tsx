@@ -23,6 +23,8 @@ import { api, JourneyChapter, JourneyLesson } from '@/services/api';
 import { colors, spacing } from '@/constants/theme';
 import { pathMaxOffset, pathTranslateX } from '@/utils/pathLayout';
 
+const SCROLL_SWITCH_OFFSET = 96;
+
 export default function JourneyScreen() {
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
@@ -31,8 +33,6 @@ export default function JourneyScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const chapterAnchors = useRef<Record<number, number>>({});
   const activeChapterRef = useRef(1);
-  const lastScrollY = useRef(0);
-  const viewportHeight = useRef(600);
 
   const [chapters, setChapters] = useState<JourneyChapter[]>([]);
   const [activeChapterId, setActiveChapterId] = useState(1);
@@ -96,17 +96,13 @@ export default function JourneyScreen() {
   }, [chapters]);
 
   const syncChapterByScroll = useCallback(
-    (scrollY: number, viewHeight?: number) => {
+    (scrollY: number) => {
       if (chapters.length === 0) return;
-      if (viewHeight) viewportHeight.current = viewHeight;
-      lastScrollY.current = scrollY;
 
-      const anchor = scrollY + viewportHeight.current * 0.32;
       let nextId = chapters[0].id;
-
       for (const ch of chapters) {
-        const y = chapterAnchors.current[ch.id];
-        if (y !== undefined && y <= anchor) nextId = ch.id;
+        const y = chapterAnchors.current[ch.id] ?? 0;
+        if (y <= scrollY + SCROLL_SWITCH_OFFSET) nextId = ch.id;
       }
 
       if (nextId !== activeChapterRef.current) {
@@ -118,16 +114,11 @@ export default function JourneyScreen() {
   );
 
   const onJourneyScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    syncChapterByScroll(e.nativeEvent.contentOffset.y, e.nativeEvent.layoutMeasurement.height);
+    syncChapterByScroll(e.nativeEvent.contentOffset.y);
   };
 
   const registerChapterAnchor = (chapterId: number) => (e: LayoutChangeEvent) => {
     chapterAnchors.current[chapterId] = e.nativeEvent.layout.y;
-    syncChapterByScroll(lastScrollY.current);
-  };
-
-  const onJourneyContentSizeChange = () => {
-    syncChapterByScroll(lastScrollY.current);
   };
 
   const openLesson = (lesson: JourneyLesson) => {
@@ -147,20 +138,14 @@ export default function JourneyScreen() {
     scrollRef.current?.scrollTo({ y: Math.max(0, y - 40), animated: true });
   };
 
-  const pathItems = useMemo(() => {
-    const items: {
-      ch: JourneyChapter;
-      lesson: JourneyLesson;
-      lessonIdx: number;
-      globalIndex: number;
-    }[] = [];
-    let idx = 0;
-    for (const ch of chapters) {
-      for (let lessonIdx = 0; lessonIdx < ch.lessons.length; lessonIdx++) {
-        items.push({ ch, lesson: ch.lessons[lessonIdx], lessonIdx, globalIndex: idx++ });
-      }
-    }
-    return items;
+  const chapterBlocks = useMemo(() => {
+    const blocks: { ch: JourneyChapter; chapterIdx: number; startIndex: number }[] = [];
+    let startIndex = 0;
+    chapters.forEach((ch, chapterIdx) => {
+      blocks.push({ ch, chapterIdx, startIndex });
+      startIndex += ch.lessons.length;
+    });
+    return blocks;
   }, [chapters]);
 
   if (!ready || (!chapter && loading)) {
@@ -197,41 +182,42 @@ export default function JourneyScreen() {
         refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.primary} />}
         showsVerticalScrollIndicator={false}
         onScroll={onJourneyScroll}
-        onMomentumScrollEnd={onJourneyScroll}
-        onContentSizeChange={onJourneyContentSizeChange}
         scrollEventThrottle={16}
       >
-        {pathItems.map(({ ch, lesson, lessonIdx, globalIndex }) => {
-          const section = ch.sections.find((s) => s.afterLessonOrder === lesson.sortOrder);
-          const isChapterStart = lessonIdx === 0;
-          const isNewChapter = isChapterStart && ch.id !== chapters[0]?.id;
+        {chapterBlocks.map(({ ch, chapterIdx, startIndex }) => (
+          <View
+            key={ch.id}
+            onLayout={registerChapterAnchor(ch.id)}
+            style={chapterIdx > 0 ? styles.chapterGap : undefined}
+          >
+            {ch.lessons.map((lesson, lessonIdx) => {
+              const globalIndex = startIndex + lessonIdx;
+              const section = ch.sections.find((s) => s.afterLessonOrder === lesson.sortOrder);
 
-          return (
-            <View
-              key={lesson.id}
-              onLayout={isChapterStart ? registerChapterAnchor(ch.id) : undefined}
-              style={isNewChapter ? styles.chapterGap : undefined}
-            >
-              <View style={[styles.nodeRow, { paddingHorizontal: pathMaxOffset(screenWidth) + 8 }]}>
-                <Pressable onPress={() => openLesson(lesson)}>
-                  <LessonNode
-                    status={lesson.status}
-                    type={lesson.type}
-                    isCurrent={lesson.id === currentLessonId && lesson.status !== 'locked'}
-                    translateX={pathTranslateX(globalIndex, screenWidth)}
-                  />
-                </Pressable>
-              </View>
-              {section && (
-                <View style={styles.sectionRow}>
-                  <View style={styles.sectionLine} />
-                  <Text style={styles.sectionText}>{section.title}</Text>
-                  <View style={styles.sectionLine} />
+              return (
+                <View key={lesson.id}>
+                  <View style={[styles.nodeRow, { paddingHorizontal: pathMaxOffset(screenWidth) + 8 }]}>
+                    <Pressable onPress={() => openLesson(lesson)}>
+                      <LessonNode
+                        status={lesson.status}
+                        type={lesson.type}
+                        isCurrent={lesson.id === currentLessonId && lesson.status !== 'locked'}
+                        translateX={pathTranslateX(globalIndex, screenWidth)}
+                      />
+                    </Pressable>
+                  </View>
+                  {section && (
+                    <View style={styles.sectionRow}>
+                      <View style={styles.sectionLine} />
+                      <Text style={styles.sectionText}>{section.title}</Text>
+                      <View style={styles.sectionLine} />
+                    </View>
+                  )}
                 </View>
-              )}
-            </View>
-          );
-        })}
+              );
+            })}
+          </View>
+        ))}
       </ScrollView>
 
       <Pressable style={styles.fab} onPress={scrollToCurrentLesson}>
