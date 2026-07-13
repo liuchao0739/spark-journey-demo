@@ -315,8 +315,10 @@ async function main() {
   }
 
   const enContent = buildLongContent('en-US');
+  const ch1Count = lessonsCh1.length;
+  const ch2Count = lessonsCh2.length;
   console.log(`Seed complete. Lesson 1 EN content length: ${enContent.length} chars`);
-  console.log(`Chapters: 2, Lessons: ${allLessons.length}`);
+  console.log(`Chapters: 2 | Chapter 1: ${ch1Count} lessons | Chapter 2: ${ch2Count} lessons | Total: ${allLessons.length}`);
 }
 
 main()
