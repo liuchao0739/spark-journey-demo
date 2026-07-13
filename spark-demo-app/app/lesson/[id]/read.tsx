@@ -81,6 +81,7 @@ export default function LessonReadScreen() {
       return;
     }
     setPhase('loading');
+    scrollToEnd();
   };
 
   if (!lesson) {
@@ -115,12 +116,12 @@ export default function LessonReadScreen() {
             headingFont={fontSize(22)}
             onSectionExpanded={onSectionExpanded}
           />
+          {phase === 'loading' && (
+            <View style={styles.loadingRow}>
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          )}
         </ScrollView>
-        {phase === 'loading' && (
-          <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color={colors.primary} />
-          </View>
-        )}
       </View>
       <Pressable
         style={[styles.button, busy && styles.buttonDisabled]}
@@ -137,14 +138,13 @@ export default function LessonReadScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  body: { flex: 1, position: 'relative' },
+  body: { flex: 1 },
   scroll: { flex: 1 },
   scrollContent: { flexGrow: 1, paddingBottom: spacing.md },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
+  loadingRow: {
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xl,
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(26,26,26,0.55)',
   },
   button: {
     marginHorizontal: spacing.lg,
