@@ -186,11 +186,11 @@ async function main() {
       type: 'reading',
       en: {
         title: 'Welcome to your personalized journey of healing from trauma',
-        subtitle: 'part 1/4',
+        subtitle: 'part 1/7',
       },
       zh: {
         title: '欢迎踏上你的个性化创伤疗愈之旅',
-        subtitle: '第 1/4 部分',
+        subtitle: '第 1/7 部分',
       },
       longContent: true,
     },
@@ -198,25 +198,55 @@ async function main() {
       sortOrder: 2,
       type: 'reading',
       en: {
-        title: 'Understanding Childhood Trauma?',
+        title: 'Understanding Childhood Trauma',
         subtitle: 'Reading',
       },
       zh: {
-        title: '理解童年创伤？',
+        title: '理解童年创伤',
         subtitle: '阅读',
       },
     },
     {
       sortOrder: 3,
+      type: 'reading',
+      en: {
+        title: 'What Truly Brought You Here',
+        subtitle: 'Reading',
+      },
+      zh: {
+        title: '是什么真正把你带到这里',
+        subtitle: '阅读',
+      },
+    },
+    {
+      sortOrder: 4,
       type: 'practice',
       en: { title: 'Grounding Exercise', subtitle: 'Practice' },
       zh: { title: '接地练习', subtitle: '练习' },
     },
     {
-      sortOrder: 4,
+      sortOrder: 5,
       type: 'reading',
-      en: { title: 'Building Your Safe Base', subtitle: 'part 4/4' },
-      zh: { title: '建立你的安全基地', subtitle: '第 4/4 部分' },
+      en: {
+        title: 'Recognizing Unhelpful Patterns',
+        subtitle: 'Reading',
+      },
+      zh: {
+        title: '识别不良思维模式',
+        subtitle: '阅读',
+      },
+    },
+    {
+      sortOrder: 6,
+      type: 'practice',
+      en: { title: 'Breathing for Calm', subtitle: 'Practice' },
+      zh: { title: '平静呼吸练习', subtitle: '练习' },
+    },
+    {
+      sortOrder: 7,
+      type: 'reading',
+      en: { title: 'Building Your Safe Base', subtitle: 'part 7/7' },
+      zh: { title: '建立你的安全基地', subtitle: '第 7/7 部分' },
     },
   ];
 
