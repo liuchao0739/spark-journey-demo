@@ -15,7 +15,7 @@ export function resolveLocale(req: Request): Locale {
     if (header.includes('en')) return 'en-US';
   }
 
-  return 'en-US';
+  return 'zh-CN';
 }
 
 export function pickTranslation<T extends { locale: string }>(

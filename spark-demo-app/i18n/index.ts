@@ -1,6 +1,5 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import * as Localization from 'expo-localization';
 
 const resources = {
   'en-US': {
@@ -90,13 +89,12 @@ const resources = {
   },
 };
 
-const deviceLocale = Localization.getLocales()[0]?.languageTag ?? 'en-US';
-const initialLocale = deviceLocale.startsWith('zh') ? 'zh-CN' : 'en-US';
+const initialLocale = 'zh-CN';
 
 void i18n.use(initReactI18next).init({
   resources,
   lng: initialLocale,
-  fallbackLng: 'en-US',
+  fallbackLng: 'zh-CN',
   interpolation: { escapeValue: false },
 });
 

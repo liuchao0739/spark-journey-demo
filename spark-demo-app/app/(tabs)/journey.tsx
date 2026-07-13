@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
   Pressable,
   RefreshControl,
@@ -11,19 +12,25 @@ import {
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
 import { ChapterHeader, ChapterSheet, NodePopover } from '@/components/journey/JourneyComponents';
 import { LessonNode } from '@/components/journey/LessonNode';
 import { useApp } from '@/context/AppContext';
 import { api, JourneyChapter, JourneyLesson } from '@/services/api';
 import { colors, spacing } from '@/constants/theme';
 
-const offsets: Array<'left' | 'center' | 'right'> = ['center', 'right', 'left', 'center', 'right', 'left'];
+const offsets: Array<'left' | 'center' | 'right'> = [
+  'center',
+  'right',
+  'left',
+  'center',
+  'right',
+  'left',
+  'center',
+];
 
 export default function JourneyScreen() {
   const router = useRouter();
-  const { t } = useTranslation();
-  const { locale } = useApp();
+  const { locale, ready } = useApp();
   const scrollRef = useRef<ScrollView>(null);
 
   const [chapters, setChapters] = useState<JourneyChapter[]>([]);
@@ -34,6 +41,7 @@ export default function JourneyScreen() {
   const [popoverLesson, setPopoverLesson] = useState<JourneyLesson | null>(null);
 
   const load = useCallback(async () => {
+    if (!ready) return;
     try {
       const data = await api.getJourney(locale);
       setChapters(data.chapters);
@@ -44,7 +52,7 @@ export default function JourneyScreen() {
     } finally {
       setLoading(false);
     }
-  }, [locale]);
+  }, [locale, ready]);
 
   useFocusEffect(
     useCallback(() => {
@@ -53,9 +61,10 @@ export default function JourneyScreen() {
   );
 
   useEffect(() => {
+    if (!ready) return;
     setLoading(true);
     void load();
-  }, [locale, load]);
+  }, [locale, ready, load]);
 
   const chapter = useMemo(
     () => chapters.find((c) => c.id === activeChapterId) ?? chapters[0],
@@ -82,10 +91,18 @@ export default function JourneyScreen() {
     router.push(`/lesson/${id}/intro`);
   };
 
+  if (!ready || (!chapter && loading)) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator color={colors.primary} style={{ marginTop: 80 }} />
+      </SafeAreaView>
+    );
+  }
+
   if (!chapter) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={styles.loading}>{loading ? 'Loading...' : 'No data — start API server'}</Text>
+        <Text style={styles.loading}>无法加载数据，请确认后端已启动</Text>
       </SafeAreaView>
     );
   }
@@ -106,11 +123,12 @@ export default function JourneyScreen() {
         ref={scrollRef}
         contentContainerStyle={styles.scroll}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.primary} />}
+        showsVerticalScrollIndicator={false}
       >
         {chapter.lessons.map((lesson, index) => {
           const section = chapter.sections.find((s) => s.afterLessonOrder === lesson.sortOrder);
           return (
-            <View key={lesson.id}>
+            <View key={lesson.id} style={styles.nodeRow}>
               <Pressable onPress={() => openLesson(lesson)}>
                 <LessonNode
                   status={lesson.status}
@@ -131,13 +149,17 @@ export default function JourneyScreen() {
         })}
       </ScrollView>
 
-      <Pressable style={styles.fab} onPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })}>
-        <Image source={require('@/assets/images/ui-locator-arrow-up.png')} style={styles.fabIcon} />
+      <Pressable
+        style={styles.fab}
+        onPress={() => scrollRef.current?.scrollToEnd({ animated: true })}
+      >
+        <Image source={require('@/assets/images/ui-locator-arrow-down.png')} style={styles.fabIcon} />
       </Pressable>
 
       <NodePopover
         visible={!!popoverLesson}
         lesson={popoverLesson}
+        isCurrent={popoverLesson?.id === currentLessonId}
         onClose={() => setPopoverLesson(null)}
         onAction={goLesson}
       />
@@ -160,7 +182,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
+    paddingBottom: spacing.xs,
   },
   starBadge: {
     flexDirection: 'row',
@@ -170,15 +192,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     gap: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   starCount: { color: colors.text, fontWeight: '700', fontSize: 15 },
   starIcon: { width: 18, height: 18 },
-  scroll: { paddingBottom: 120, paddingTop: spacing.sm },
+  scroll: { paddingBottom: 140, paddingTop: spacing.xs },
+  nodeRow: { marginBottom: spacing.xs },
   sectionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: spacing.lg,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     gap: spacing.md,
   },
   sectionLine: { flex: 1, height: 1, backgroundColor: colors.border },
@@ -186,13 +211,15 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: spacing.md,
-    bottom: 16,
+    bottom: 12,
     width: 44,
     height: 44,
     borderRadius: 12,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   fabIcon: { width: 20, height: 20, tintColor: colors.text },
 });

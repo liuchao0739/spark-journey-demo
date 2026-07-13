@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import { AppLocale, normalizeLocale } from '@/utils/locale';
 
 function getDefaultApiUrl() {
   if (Platform.OS === 'android') {
@@ -60,7 +61,7 @@ export interface LessonDetail {
 
 async function request<T>(path: string, options: RequestInit & { locale?: string } = {}): Promise<T> {
   const { locale, headers, ...rest } = options;
-  const loc = locale ?? 'en-US';
+  const loc = normalizeLocale(locale);
   const sep = path.includes('?') ? '&' : '?';
   const url = `${API_BASE_URL}${path}${sep}locale=${loc}`;
 

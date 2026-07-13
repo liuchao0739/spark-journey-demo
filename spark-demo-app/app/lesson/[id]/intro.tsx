@@ -38,10 +38,12 @@ export default function LessonIntroScreen() {
         <View style={styles.durationPill}>
           <Text style={styles.durationText}>🕒 {t('lesson.mins', { count: lesson.durationMin })}</Text>
         </View>
-        <Text style={[styles.title, { fontSize: fontSize(26), lineHeight: fontSize(34) }]}>
+        <Text style={[styles.title, { fontSize: fontSize(28), lineHeight: fontSize(36) }]}>
           {lesson.title}
         </Text>
-        {lesson.subtitle && <Text style={styles.subtitle}>{lesson.subtitle.toUpperCase()}</Text>}
+        {lesson.subtitle && (
+          <Text style={styles.subtitle}>{lesson.subtitle.toUpperCase()}</Text>
+        )}
       </View>
       <Pressable style={styles.button} onPress={() => router.push(`/lesson/${id}/read`)}>
         <Text style={styles.buttonText}>{t('lesson.startSession')}</Text>
@@ -52,16 +54,21 @@ export default function LessonIntroScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  body: { flex: 1, paddingHorizontal: spacing.lg, justifyContent: 'center', gap: spacing.md },
+  body: {
+    flex: 1,
+    paddingHorizontal: spacing.lg,
+    paddingTop: 56,
+    gap: spacing.md,
+  },
   badge: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+    width: 52,
+    height: 52,
+    borderRadius: 14,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeText: { color: colors.text, fontSize: 20, fontWeight: '800' },
+  badgeText: { color: colors.text, fontSize: 18, fontWeight: '800' },
   durationPill: {
     alignSelf: 'flex-start',
     backgroundColor: colors.surface,
@@ -70,12 +77,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   durationText: { color: colors.textMuted, fontSize: 13 },
-  title: { color: colors.text, fontWeight: '800' },
-  subtitle: { color: colors.textDim, fontSize: 13, letterSpacing: 1 },
+  title: { color: colors.text, fontWeight: '800', marginTop: spacing.sm },
+  subtitle: { color: colors.textDim, fontSize: 13, letterSpacing: 1.2 },
   button: {
     margin: spacing.lg,
     backgroundColor: colors.primary,
-    borderRadius: 16,
+    borderRadius: 28,
     paddingVertical: 16,
     alignItems: 'center',
   },

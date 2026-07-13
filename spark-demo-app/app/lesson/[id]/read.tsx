@@ -1,8 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -18,6 +16,7 @@ import { LessonTopBar } from '@/components/lesson/LessonComponents';
 import { useApp } from '@/context/AppContext';
 import { api, LessonDetail } from '@/services/api';
 import { colors, spacing } from '@/constants/theme';
+import { splitContentPages } from '@/utils/locale';
 
 export default function LessonReadScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -26,19 +25,21 @@ export default function LessonReadScreen() {
   const { locale, fontSize, cycleFontScale } = useApp();
   const { width } = useWindowDimensions();
   const [lesson, setLesson] = useState<LessonDetail | null>(null);
-  const [progress, setProgress] = useState(0);
+  const [pageIndex, setPageIndex] = useState(0);
 
   useEffect(() => {
     if (!id) return;
+    setPageIndex(0);
     void api.getLesson(Number(id), locale).then(setLesson);
   }, [id, locale]);
 
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
-    const max = contentSize.height - layoutMeasurement.height;
-    if (max > 0) setProgress(contentOffset.y / max);
-    else setProgress(1);
-  };
+  const pages = useMemo(
+    () => (lesson ? splitContentPages(lesson.content) : []),
+    [lesson],
+  );
+
+  const isLastPage = pageIndex >= pages.length - 1;
+  const progress = pages.length > 1 ? (pageIndex + 1) / pages.length : 1;
 
   if (!lesson) {
     return (
@@ -50,6 +51,14 @@ export default function LessonReadScreen() {
 
   const baseFont = fontSize(16);
 
+  const onPrimary = () => {
+    if (isLastPage) {
+      router.push(`/lesson/${id}/complete`);
+    } else {
+      setPageIndex((p) => p + 1);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <LessonTopBar
@@ -60,12 +69,11 @@ export default function LessonReadScreen() {
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
       >
         <RenderHtml
           contentWidth={width - spacing.lg * 2}
-          source={{ html: lesson.content }}
+          source={{ html: pages[pageIndex] ?? '' }}
           baseStyle={{
             color: colors.text,
             fontSize: baseFont,
@@ -76,7 +84,7 @@ export default function LessonReadScreen() {
               color: colors.text,
               fontSize: fontSize(22),
               fontWeight: '700',
-              marginTop: 24,
+              marginTop: 8,
               marginBottom: 12,
             },
             p: { marginBottom: 14, color: colors.text },
@@ -86,8 +94,10 @@ export default function LessonReadScreen() {
           }}
         />
       </ScrollView>
-      <Pressable style={styles.button} onPress={() => router.push(`/lesson/${id}/complete`)}>
-        <Text style={styles.buttonText}>{t('lesson.completeSession')}</Text>
+      <Pressable style={styles.button} onPress={onPrimary}>
+        <Text style={styles.buttonText}>
+          {isLastPage ? t('lesson.completeSession') : t('lesson.continue')}
+        </Text>
       </Pressable>
     </SafeAreaView>
   );
@@ -96,11 +106,12 @@ export default function LessonReadScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl },
+  scrollContent: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md, flexGrow: 1 },
   button: {
-    margin: spacing.lg,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
     backgroundColor: colors.primary,
-    borderRadius: 16,
+    borderRadius: 28,
     paddingVertical: 16,
     alignItems: 'center',
   },

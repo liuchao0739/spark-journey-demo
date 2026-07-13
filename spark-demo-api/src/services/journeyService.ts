@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 export async function getUserProfile() {
   let user = await prisma.userProfile.findUnique({ where: { id: 1 } });
   if (!user) {
-    user = await prisma.userProfile.create({ data: { id: 1, stars: 0, locale: 'en-US' } });
+    user = await prisma.userProfile.create({ data: { id: 1, stars: 0, locale: 'zh-CN' } });
   }
   return user;
 }

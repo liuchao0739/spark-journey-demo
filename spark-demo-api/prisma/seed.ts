@@ -104,7 +104,7 @@ async function main() {
   await prisma.userProfile.deleteMany();
 
   const user = await prisma.userProfile.create({
-    data: { id: 1, stars: 0, locale: 'en-US' },
+    data: { id: 1, stars: 0, locale: 'zh-CN' },
   });
 
   const chapter1 = await prisma.chapter.create({

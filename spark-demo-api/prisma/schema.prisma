@@ -68,7 +68,7 @@ model LessonTranslation {
 model UserProfile {
   id        Int      @id @default(1)
   stars     Int      @default(0)
-  locale    String   @default("en-US")
+  locale    String   @default("zh-CN")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   progress UserLessonProgress[]

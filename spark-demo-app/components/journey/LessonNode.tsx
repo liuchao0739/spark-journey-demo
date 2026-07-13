@@ -1,5 +1,6 @@
 import { Image, ImageSourcePropType, StyleSheet, View } from 'react-native';
 import type { LessonStatus } from '@/services/api';
+import { colors } from '@/constants/theme';
 
 const assets = {
   active: require('@/assets/images/node-base-active.png'),
@@ -52,31 +53,33 @@ export function LessonNode({ status, type, isCurrent, offset }: LessonNodeProps)
   );
 }
 
-const NODE = 88;
+const NODE = 96;
 
 const styles = StyleSheet.create({
   wrap: {
-    width: NODE + 20,
-    height: NODE + 20,
+    width: NODE + 24,
+    height: NODE + 24,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
-    marginVertical: 8,
+    marginVertical: 14,
   },
-  left: { alignSelf: 'flex-start', marginLeft: 48 },
-  right: { alignSelf: 'flex-end', marginRight: 48 },
-  outer: { position: 'absolute', width: NODE + 16, height: NODE + 16 },
+  left: { alignSelf: 'flex-start', marginLeft: 56 },
+  right: { alignSelf: 'flex-end', marginRight: 56 },
+  outer: { position: 'absolute', width: NODE + 18, height: NODE + 18 },
   base: { position: 'absolute', width: NODE, height: NODE },
-  inner: { position: 'absolute', width: NODE - 18, height: NODE - 18 },
-  icon: { width: 28, height: 28 },
+  inner: { position: 'absolute', width: NODE - 20, height: NODE - 20 },
+  icon: { width: 30, height: 30 },
   sparkle: {
     position: 'absolute',
-    top: 4,
-    right: 18,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
+    top: 2,
+    right: 20,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: '#4fc3f7',
     zIndex: 2,
+    borderWidth: 2,
+    borderColor: colors.background,
   },
 });

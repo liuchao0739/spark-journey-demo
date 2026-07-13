@@ -14,29 +14,36 @@ import type { JourneyChapter, JourneyLesson } from '@/services/api';
 interface NodePopoverProps {
   visible: boolean;
   lesson: JourneyLesson | null;
+  isCurrent?: boolean;
   onClose: () => void;
   onAction: () => void;
 }
 
-export function NodePopover({ visible, lesson, onClose, onAction }: NodePopoverProps) {
+export function NodePopover({ visible, lesson, isCurrent, onClose, onAction }: NodePopoverProps) {
   const { t } = useTranslation();
   if (!lesson) return null;
 
   const actionLabel =
-    lesson.status === 'completed' ? t('journey.continue') : t('journey.start');
-  const typeLabel =
-    lesson.type === 'practice' ? t('journey.practice') : t('journey.reading');
+    lesson.status === 'completed' || isCurrent
+      ? t('journey.continue')
+      : t('journey.start');
+
+  const subtitle =
+    lesson.subtitle ??
+    (lesson.type === 'practice' ? t('journey.practice') : t('journey.reading'));
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
-          <Text style={styles.title}>{lesson.title}</Text>
-          <Text style={styles.subtitle}>{typeLabel}</Text>
-          <Pressable style={styles.button} onPress={onAction}>
-            <Text style={styles.buttonText}>{actionLabel}</Text>
+        <View style={styles.popoverAnchor} pointerEvents="box-none">
+          <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.title}>{lesson.title}</Text>
+            <Text style={styles.subtitle}>{subtitle}</Text>
+            <Pressable style={styles.button} onPress={onAction}>
+              <Text style={styles.buttonText}>{actionLabel}</Text>
+            </Pressable>
           </Pressable>
-        </Pressable>
+        </View>
       </Pressable>
     </Modal>
   );
@@ -121,24 +128,33 @@ export function ChapterHeader({ chapter, onPress }: ChapterHeaderProps) {
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  popoverAnchor: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: 72,
   },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: spacing.lg,
     width: '100%',
-    maxWidth: 340,
+    maxWidth: 360,
     gap: spacing.sm,
+    shadowColor: '#000',
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
   },
-  title: { color: colors.text, fontSize: 18, fontWeight: '700', lineHeight: 26 },
+  title: { color: colors.text, fontSize: 20, fontWeight: '700', lineHeight: 28 },
   subtitle: { color: colors.textMuted, fontSize: 14, marginBottom: spacing.sm },
   button: {
     backgroundColor: colors.primary,
-    borderRadius: 14,
+    borderRadius: 28,
     paddingVertical: 14,
     alignItems: 'center',
   },
@@ -186,10 +202,11 @@ const styles = StyleSheet.create({
   chapterTabText: { color: colors.text, fontSize: 12, fontWeight: '700' },
   headerCard: {
     backgroundColor: colors.surface,
-    borderRadius: 16,
+    borderRadius: 20,
     marginHorizontal: spacing.md,
-    marginBottom: spacing.md,
-    overflow: 'hidden',
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   headerInner: { padding: spacing.md },
   labelBadge: {
@@ -198,10 +215,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    marginBottom: 6,
+    marginBottom: 8,
   },
   labelText: { color: colors.text, fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerTitle: { color: colors.text, fontSize: 22, fontWeight: '700', flex: 1 },
+  headerTitle: { color: colors.text, fontSize: 24, fontWeight: '700', flex: 1 },
   chevron: { width: 16, height: 16, tintColor: colors.textMuted },
 });
