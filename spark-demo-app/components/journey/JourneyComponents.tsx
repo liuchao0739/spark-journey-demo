@@ -1,9 +1,6 @@
-import { useEffect, useRef } from 'react';
 import {
   Image,
   Modal,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -54,95 +51,30 @@ export function NodePopover({ visible, lesson, isCurrent, onClose, onAction }: N
 
 interface ChapterSheetProps {
   visible: boolean;
-  chapters: JourneyChapter[];
-  activeChapterId: number;
-  onActiveChapterChange: (id: number) => void;
+  chapter: JourneyChapter | null;
   onClose: () => void;
 }
 
-export function ChapterSheet({
-  visible,
-  chapters,
-  activeChapterId,
-  onActiveChapterChange,
-  onClose,
-}: ChapterSheetProps) {
+export function ChapterSheet({ visible, chapter, onClose }: ChapterSheetProps) {
   const { t } = useTranslation();
-  const scrollRef = useRef<ScrollView>(null);
-  const sectionOffsets = useRef<Record<number, number>>({});
-  const activeRef = useRef(activeChapterId);
-
-  useEffect(() => {
-    activeRef.current = activeChapterId;
-  }, [activeChapterId]);
-
-  useEffect(() => {
-    if (!visible) return;
-    const targetId = activeChapterId;
-    const timer = setTimeout(() => {
-      const y = sectionOffsets.current[targetId] ?? 0;
-      scrollRef.current?.scrollTo({ y, animated: false });
-    }, 60);
-    return () => clearTimeout(timer);
-    // 仅在打开 Sheet 时定位，滚动切换章节时不打断用户
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible]);
-
-  if (chapters.length === 0) return null;
-
-  const updateActiveByScroll = (scrollY: number) => {
-    let nextId = chapters[0].id;
-    for (const c of chapters) {
-      const offset = sectionOffsets.current[c.id] ?? 0;
-      if (offset <= scrollY + 72) nextId = c.id;
-    }
-    if (nextId !== activeRef.current) {
-      activeRef.current = nextId;
-      onActiveChapterChange(nextId);
-    }
-  };
-
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    updateActiveByScroll(e.nativeEvent.contentOffset.y);
-  };
+  if (!chapter) return null;
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.sheetBackdrop} onPress={onClose}>
         <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
           <View style={styles.handle} />
-          <ScrollView
-            ref={scrollRef}
-            style={styles.sheetScroll}
-            contentContainerStyle={styles.sheetScrollContent}
-            showsVerticalScrollIndicator={false}
-            onScroll={onScroll}
-            scrollEventThrottle={16}
-          >
-            {chapters.map((c, index) => {
-              const isActive = c.id === activeChapterId;
-              return (
-                <View
-                  key={c.id}
-                  style={[styles.chapterSection, isActive && styles.chapterSectionActive]}
-                  onLayout={(e) => {
-                    sectionOffsets.current[c.id] = e.nativeEvent.layout.y;
-                  }}
-                >
-                  <Text style={styles.sheetChapter}>{c.label}</Text>
-                  <Text style={styles.sheetTitle}>{c.title}</Text>
-                  <View style={styles.divider} />
-                  <Text style={styles.explore}>{t('journey.exploreTitle')}</Text>
-                  {c.bullets.map((b) => (
-                    <View key={b} style={styles.bulletRow}>
-                      <View style={styles.bulletDot} />
-                      <Text style={styles.bulletText}>{b}</Text>
-                    </View>
-                  ))}
-                  {index < chapters.length - 1 && <View style={styles.chapterGap} />}
-                </View>
-              );
-            })}
+          <Text style={styles.sheetChapter}>{chapter.label}</Text>
+          <Text style={styles.sheetTitle}>{chapter.title}</Text>
+          <View style={styles.divider} />
+          <Text style={styles.explore}>{t('journey.exploreTitle')}</Text>
+          <ScrollView style={styles.bulletScroll} showsVerticalScrollIndicator={false}>
+            {chapter.bullets.map((b) => (
+              <View key={b} style={styles.bulletRow}>
+                <View style={styles.bulletDot} />
+                <Text style={styles.bulletText}>{b}</Text>
+              </View>
+            ))}
           </ScrollView>
         </Pressable>
       </Pressable>
@@ -213,26 +145,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingTop: spacing.md,
-    paddingHorizontal: spacing.lg,
-    maxHeight: '72%',
-    minHeight: 320,
-  },
-  sheetScroll: { flexGrow: 0 },
-  sheetScrollContent: { paddingBottom: spacing.xl },
-  chapterSection: {
-    paddingVertical: spacing.md,
-    borderRadius: 16,
-    paddingHorizontal: spacing.sm,
-  },
-  chapterSectionActive: {
-    backgroundColor: 'rgba(88,204,2,0.08)',
-  },
-  chapterGap: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginTop: spacing.lg,
-    marginBottom: spacing.sm,
+    padding: spacing.lg,
+    maxHeight: '56%',
+    minHeight: 280,
   },
   handle: {
     alignSelf: 'center',
@@ -246,6 +161,7 @@ const styles = StyleSheet.create({
   sheetTitle: { color: colors.text, fontSize: 24, fontWeight: '700', marginTop: 4 },
   divider: { height: 1, backgroundColor: colors.border, marginVertical: spacing.md },
   explore: { color: colors.textMuted, fontSize: 15, marginBottom: spacing.sm },
+  bulletScroll: { maxHeight: 200 },
   bulletRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 10 },
   bulletDot: {
     width: 8,
