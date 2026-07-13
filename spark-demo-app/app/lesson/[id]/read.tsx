@@ -11,13 +11,15 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { LessonTopBar } from '@/components/lesson/LessonComponents';
-import { LessonRevealContent, LoadingSweep } from '@/components/lesson/RevealContent';
+import { LessonRevealContent } from '@/components/lesson/RevealContent';
 import { useApp } from '@/context/AppContext';
 import { api, LessonDetail } from '@/services/api';
 import { colors, spacing } from '@/constants/theme';
 import { splitContentPages } from '@/utils/locale';
 
-type RevealPhase = 'idle' | 'sweeping' | 'expanding';
+const LOADING_MS = 400;
+
+type RevealPhase = 'idle' | 'loading' | 'expanding';
 
 export default function LessonReadScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -54,12 +56,16 @@ export default function LessonReadScreen() {
     });
   }, []);
 
-  const onSweepFinish = useCallback(() => {
-    const nextIndex = revealedCount;
-    setRevealedCount((c) => c + 1);
-    setRevealingIndex(nextIndex);
-    setPhase('expanding');
-  }, [revealedCount]);
+  useEffect(() => {
+    if (phase !== 'loading') return;
+    const timer = setTimeout(() => {
+      const nextIndex = revealedCount;
+      setRevealedCount((c) => c + 1);
+      setRevealingIndex(nextIndex);
+      setPhase('expanding');
+    }, LOADING_MS);
+    return () => clearTimeout(timer);
+  }, [phase, revealedCount]);
 
   const onSectionExpanded = useCallback(() => {
     setRevealingIndex(null);
@@ -73,7 +79,7 @@ export default function LessonReadScreen() {
       router.push(`/lesson/${id}/complete`);
       return;
     }
-    setPhase('sweeping');
+    setPhase('loading');
   };
 
   if (!lesson) {
@@ -109,7 +115,11 @@ export default function LessonReadScreen() {
             onSectionExpanded={onSectionExpanded}
           />
         </ScrollView>
-        <LoadingSweep active={phase === 'sweeping'} onFinish={onSweepFinish} />
+        {phase === 'loading' && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        )}
       </View>
       <Pressable
         style={[styles.button, busy && styles.buttonDisabled]}
@@ -129,6 +139,12 @@ const styles = StyleSheet.create({
   body: { flex: 1, position: 'relative' },
   scroll: { flex: 1 },
   scrollContent: { flexGrow: 1, paddingBottom: spacing.md },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(26,26,26,0.55)',
+  },
   button: {
     marginHorizontal: spacing.lg,
     marginBottom: spacing.lg,

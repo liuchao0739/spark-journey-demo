@@ -102,52 +102,6 @@ function RevealSection({ animate, onAnimated, ...htmlProps }: RevealSectionProps
   );
 }
 
-interface LoadingSweepProps {
-  active: boolean;
-  onFinish: () => void;
-}
-
-/** 自上而下扫过的加载线 */
-export function LoadingSweep({ active, onFinish }: LoadingSweepProps) {
-  const progress = useRef(new Animated.Value(0)).current;
-  const glow = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (!active) return;
-    progress.setValue(0);
-    glow.setValue(0);
-    Animated.sequence([
-      Animated.timing(progress, {
-        toValue: 1,
-        duration: 420,
-        easing: Easing.inOut(Easing.quad),
-        useNativeDriver: false,
-      }),
-      Animated.timing(glow, {
-        toValue: 1,
-        duration: 120,
-        useNativeDriver: true,
-      }),
-    ]).start(({ finished }) => {
-      if (finished) onFinish();
-    });
-  }, [active, progress, glow, onFinish]);
-
-  if (!active) return null;
-
-  const top = progress.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '92%'],
-  });
-
-  return (
-    <View style={styles.sweepWrap} pointerEvents="none">
-      <Animated.View style={[styles.sweepTrail, { top, opacity: glow }]} />
-      <Animated.View style={[styles.sweepLine, { top }]} />
-    </View>
-  );
-}
-
 interface LessonRevealContentProps {
   sections: string[];
   revealedCount: number;
@@ -185,25 +139,4 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md },
   section: { marginBottom: spacing.sm },
   measure: { position: 'absolute', opacity: 0, left: 0, right: 0, zIndex: -1 },
-  sweepWrap: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 10,
-  },
-  sweepLine: {
-    position: 'absolute',
-    left: spacing.lg,
-    right: spacing.lg,
-    height: 2,
-    backgroundColor: colors.primary,
-    borderRadius: 1,
-  },
-  sweepTrail: {
-    position: 'absolute',
-    left: spacing.lg,
-    right: spacing.lg,
-    height: 28,
-    backgroundColor: colors.primary,
-    opacity: 0.12,
-    borderRadius: 14,
-  },
 });
