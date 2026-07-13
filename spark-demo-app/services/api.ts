@@ -35,7 +35,7 @@ export interface JourneyChapter {
   description?: string | null;
   bullets: string[];
   lessons: JourneyLesson[];
-  sections: { title: string; afterLessonOrder: number }[];
+  sections: { title: string; afterLessonOrder?: number; beforeLessonOrder?: number }[];
 }
 
 export interface JourneyData {

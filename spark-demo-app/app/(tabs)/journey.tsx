@@ -215,7 +215,18 @@ export default function JourneyScreen() {
 
           ch.lessons.forEach((lesson, lessonIdx) => {
             const globalIndex = startIndex + lessonIdx;
-            const section = ch.sections.find((s) => s.afterLessonOrder === lesson.sortOrder);
+            const beforeSection = ch.sections.find((s) => s.beforeLessonOrder === lesson.sortOrder);
+            const afterSection = ch.sections.find((s) => s.afterLessonOrder === lesson.sortOrder);
+
+            if (beforeSection) {
+              rows.push(
+                <View key={`section-before-${lesson.id}`} style={styles.sectionRow}>
+                  <View style={styles.sectionLine} />
+                  <Text style={styles.sectionText}>{beforeSection.title}</Text>
+                  <View style={styles.sectionLine} />
+                </View>,
+              );
+            }
 
             rows.push(
               <View key={lesson.id}>
@@ -229,10 +240,10 @@ export default function JourneyScreen() {
                     />
                   </Pressable>
                 </View>
-                {section && (
+                {afterSection && (
                   <View style={styles.sectionRow}>
                     <View style={styles.sectionLine} />
-                    <Text style={styles.sectionText}>{section.title}</Text>
+                    <Text style={styles.sectionText}>{afterSection.title}</Text>
                     <View style={styles.sectionLine} />
                   </View>
                 )}

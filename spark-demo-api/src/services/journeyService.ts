@@ -44,7 +44,7 @@ export async function getJourneyData(locale: Locale) {
 
     const sections =
       chapter.slug === 'thinking'
-        ? [{ title: locale === 'zh-CN' ? '思维' : 'Thinking', afterLessonOrder: 4 }]
+        ? [{ title: locale === 'zh-CN' ? '思维' : 'Thinking', beforeLessonOrder: 1 }]
         : [];
 
     return {
