@@ -170,9 +170,9 @@ export default function JourneyScreen() {
 
       <ChapterSheet
         visible={sheetOpen}
-        chapter={chapter}
         chapters={chapters}
-        onSelectChapter={setActiveChapterId}
+        activeChapterId={activeChapterId}
+        onActiveChapterChange={setActiveChapterId}
         onClose={() => setSheetOpen(false)}
       />
     </SafeAreaView>
