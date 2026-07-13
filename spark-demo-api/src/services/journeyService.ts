@@ -42,7 +42,10 @@ export async function getJourneyData(locale: Locale) {
       };
     });
 
-    const sections: { title: string; afterLessonOrder: number }[] = [];
+    const sections =
+      chapter.slug === 'thinking'
+        ? [{ title: locale === 'zh-CN' ? '思维' : 'Thinking', afterLessonOrder: 4 }]
+        : [];
 
     return {
       id: chapter.id,
