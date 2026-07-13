@@ -23,10 +23,10 @@ interface LessonNodeProps {
   status: LessonStatus;
   type: string;
   isCurrent?: boolean;
-  offset: 'left' | 'center' | 'right';
+  translateX?: number;
 }
 
-export function LessonNode({ status, type, isCurrent, offset }: LessonNodeProps) {
+export function LessonNode({ status, type, isCurrent, translateX = 0 }: LessonNodeProps) {
   const isLocked = status === 'locked';
   const isCompleted = status === 'completed';
 
@@ -43,7 +43,7 @@ export function LessonNode({ status, type, isCurrent, offset }: LessonNodeProps)
   else if (type === 'practice') icon = assets.iconPractice;
 
   return (
-    <View style={[styles.wrap, offset === 'left' && styles.left, offset === 'right' && styles.right]}>
+    <View style={[styles.wrap, { transform: [{ translateX }] }]}>
       {isCurrent && <View style={styles.sparkle} />}
       <Image source={outer} style={styles.outer} resizeMode="contain" />
       <Image source={base} style={styles.base} resizeMode="contain" />
@@ -61,11 +61,8 @@ const styles = StyleSheet.create({
     height: NODE + 24,
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'center',
-    marginVertical: 14,
+    marginVertical: 16,
   },
-  left: { alignSelf: 'flex-start', marginLeft: 56 },
-  right: { alignSelf: 'flex-end', marginRight: 56 },
   outer: { position: 'absolute', width: NODE + 18, height: NODE + 18 },
   base: { position: 'absolute', width: NODE, height: NODE },
   inner: { position: 'absolute', width: NODE - 20, height: NODE - 20 },

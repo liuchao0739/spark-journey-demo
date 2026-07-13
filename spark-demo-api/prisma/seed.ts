@@ -221,9 +221,13 @@ async function main() {
   ];
 
   const lessonsCh2 = [
-  { sortOrder: 1, type: 'reading', en: { title: 'Automatic Thoughts', subtitle: 'Reading' }, zh: { title: '自动化思维', subtitle: '阅读' } },
-  { sortOrder: 2, type: 'reading', en: { title: 'Thought Records', subtitle: 'Reading' }, zh: { title: '思维记录', subtitle: '阅读' } },
-  { sortOrder: 3, type: 'practice', en: { title: 'Reframing Practice', subtitle: 'Practice' }, zh: { title: '重构练习', subtitle: '练习' } },
+    { sortOrder: 1, type: 'reading', en: { title: 'Automatic Thoughts', subtitle: 'Reading' }, zh: { title: '自动化思维', subtitle: '阅读' } },
+    { sortOrder: 2, type: 'reading', en: { title: 'Thought Records', subtitle: 'Reading' }, zh: { title: '思维记录', subtitle: '阅读' } },
+    { sortOrder: 3, type: 'practice', en: { title: 'Reframing Practice', subtitle: 'Practice' }, zh: { title: '重构练习', subtitle: '练习' } },
+    { sortOrder: 4, type: 'reading', en: { title: 'Cognitive Distortions', subtitle: 'Reading' }, zh: { title: '认知扭曲', subtitle: '阅读' } },
+    { sortOrder: 5, type: 'reading', en: { title: 'Challenging Negative Thoughts', subtitle: 'Reading' }, zh: { title: '挑战消极思维', subtitle: '阅读' } },
+    { sortOrder: 6, type: 'practice', en: { title: 'Mindful Observation', subtitle: 'Practice' }, zh: { title: '正念观察', subtitle: '练习' } },
+    { sortOrder: 7, type: 'reading', en: { title: 'Building New Patterns', subtitle: 'Reading' }, zh: { title: '建立新思维模式', subtitle: '阅读' } },
   ];
 
   const shortContent = (locale: 'en-US' | 'zh-CN', title: string) =>

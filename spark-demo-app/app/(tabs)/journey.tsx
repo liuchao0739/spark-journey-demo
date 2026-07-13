@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
+  LayoutChangeEvent,
   NativeScrollEvent,
   NativeSyntheticEvent,
   Pressable,
@@ -9,6 +10,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -19,26 +21,18 @@ import { LessonNode } from '@/components/journey/LessonNode';
 import { useApp, useAppLocale } from '@/context/AppContext';
 import { api, JourneyChapter, JourneyLesson } from '@/services/api';
 import { colors, spacing } from '@/constants/theme';
-
-const offsets: Array<'left' | 'center' | 'right'> = [
-  'center',
-  'right',
-  'left',
-  'center',
-  'right',
-  'left',
-  'center',
-];
-
-const SCROLL_SWITCH_OFFSET = 96;
+import { pathMaxOffset, pathTranslateX } from '@/utils/pathLayout';
 
 export default function JourneyScreen() {
   const router = useRouter();
+  const { width: screenWidth } = useWindowDimensions();
   const { ready } = useApp();
   const locale = useAppLocale();
   const scrollRef = useRef<ScrollView>(null);
-  const chapterOffsets = useRef<Record<number, number>>({});
+  const chapterAnchors = useRef<Record<number, number>>({});
   const activeChapterRef = useRef(1);
+  const lastScrollY = useRef(0);
+  const viewportHeight = useRef(600);
 
   const [chapters, setChapters] = useState<JourneyChapter[]>([]);
   const [activeChapterId, setActiveChapterId] = useState(1);
@@ -74,7 +68,7 @@ export default function JourneyScreen() {
     setSheetOpen(false);
     setPopoverLesson(null);
     setLoading(true);
-    chapterOffsets.current = {};
+    chapterAnchors.current = {};
     void load();
   }, [locale, ready, load]);
 
@@ -101,18 +95,39 @@ export default function JourneyScreen() {
     return lastCompleted ?? chapters[0]?.lessons[0]?.id ?? null;
   }, [chapters]);
 
+  const syncChapterByScroll = useCallback(
+    (scrollY: number, viewHeight?: number) => {
+      if (chapters.length === 0) return;
+      if (viewHeight) viewportHeight.current = viewHeight;
+      lastScrollY.current = scrollY;
+
+      const anchor = scrollY + viewportHeight.current * 0.32;
+      let nextId = chapters[0].id;
+
+      for (const ch of chapters) {
+        const y = chapterAnchors.current[ch.id];
+        if (y !== undefined && y <= anchor) nextId = ch.id;
+      }
+
+      if (nextId !== activeChapterRef.current) {
+        activeChapterRef.current = nextId;
+        setActiveChapterId(nextId);
+      }
+    },
+    [chapters],
+  );
+
   const onJourneyScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (chapters.length === 0) return;
-    const scrollY = e.nativeEvent.contentOffset.y;
-    let nextId = chapters[0].id;
-    for (const ch of chapters) {
-      const y = chapterOffsets.current[ch.id] ?? 0;
-      if (y <= scrollY + SCROLL_SWITCH_OFFSET) nextId = ch.id;
-    }
-    if (nextId !== activeChapterRef.current) {
-      activeChapterRef.current = nextId;
-      setActiveChapterId(nextId);
-    }
+    syncChapterByScroll(e.nativeEvent.contentOffset.y, e.nativeEvent.layoutMeasurement.height);
+  };
+
+  const registerChapterAnchor = (chapterId: number) => (e: LayoutChangeEvent) => {
+    chapterAnchors.current[chapterId] = e.nativeEvent.layout.y;
+    syncChapterByScroll(lastScrollY.current);
+  };
+
+  const onJourneyContentSizeChange = () => {
+    syncChapterByScroll(lastScrollY.current);
   };
 
   const openLesson = (lesson: JourneyLesson) => {
@@ -127,10 +142,26 @@ export default function JourneyScreen() {
     router.push(`/lesson/${id}/intro`);
   };
 
-  const scrollToCurrentChapter = () => {
-    const y = chapterOffsets.current[activeChapterId] ?? 0;
-    scrollRef.current?.scrollTo({ y, animated: true });
+  const scrollToCurrentLesson = () => {
+    const y = chapterAnchors.current[activeChapterId] ?? 0;
+    scrollRef.current?.scrollTo({ y: Math.max(0, y - 40), animated: true });
   };
+
+  const pathItems = useMemo(() => {
+    const items: {
+      ch: JourneyChapter;
+      lesson: JourneyLesson;
+      lessonIdx: number;
+      globalIndex: number;
+    }[] = [];
+    let idx = 0;
+    for (const ch of chapters) {
+      for (let lessonIdx = 0; lessonIdx < ch.lessons.length; lessonIdx++) {
+        items.push({ ch, lesson: ch.lessons[lessonIdx], lessonIdx, globalIndex: idx++ });
+      }
+    }
+    return items;
+  }, [chapters]);
 
   if (!ready || (!chapter && loading)) {
     return (
@@ -166,49 +197,52 @@ export default function JourneyScreen() {
         refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.primary} />}
         showsVerticalScrollIndicator={false}
         onScroll={onJourneyScroll}
+        onMomentumScrollEnd={onJourneyScroll}
+        onContentSizeChange={onJourneyContentSizeChange}
         scrollEventThrottle={16}
       >
-        {chapters.map((ch, chapterIdx) => {
-          const startIndex = chapters
-            .slice(0, chapterIdx)
-            .reduce((sum, item) => sum + item.lessons.length, 0);
+        {pathItems.map(({ ch, lesson, lessonIdx, globalIndex }) => {
+          const section = ch.sections.find((s) => s.afterLessonOrder === lesson.sortOrder);
+          const isChapterStart = lessonIdx === 0;
+          const isNewChapter = isChapterStart && ch.id !== chapters[0]?.id;
+
           return (
-          <View
-            key={ch.id}
-            onLayout={(e) => {
-              chapterOffsets.current[ch.id] = e.nativeEvent.layout.y;
-            }}
-          >
-            {ch.lessons.map((lesson, lessonIdx) => {
-              const index = startIndex + lessonIdx;
-              const section = ch.sections.find((s) => s.afterLessonOrder === lesson.sortOrder);
-              return (
-                <View key={lesson.id} style={styles.nodeRow}>
-                  <Pressable onPress={() => openLesson(lesson)}>
-                    <LessonNode
-                      status={lesson.status}
-                      type={lesson.type}
-                      isCurrent={lesson.id === currentLessonId && lesson.status !== 'locked'}
-                      offset={offsets[index % offsets.length]}
-                    />
-                  </Pressable>
-                  {section && (
-                    <View style={styles.sectionRow}>
-                      <View style={styles.sectionLine} />
-                      <Text style={styles.sectionText}>{section.title}</Text>
-                      <View style={styles.sectionLine} />
-                    </View>
-                  )}
+            <View
+              key={lesson.id}
+              onLayout={isChapterStart ? registerChapterAnchor(ch.id) : undefined}
+              style={isNewChapter ? styles.chapterGap : undefined}
+            >
+              <View style={[styles.nodeRow, { paddingHorizontal: pathMaxOffset(screenWidth) + 8 }]}>
+                <Pressable onPress={() => openLesson(lesson)}>
+                  <LessonNode
+                    status={lesson.status}
+                    type={lesson.type}
+                    isCurrent={lesson.id === currentLessonId && lesson.status !== 'locked'}
+                    translateX={pathTranslateX(globalIndex, screenWidth)}
+                  />
+                </Pressable>
+              </View>
+              {section && (
+                <View style={styles.sectionRow}>
+                  <View style={styles.sectionLine} />
+                  <Text style={styles.sectionText}>{section.title}</Text>
+                  <View style={styles.sectionLine} />
                 </View>
-              );
-            })}
-          </View>
+              )}
+            </View>
           );
         })}
       </ScrollView>
 
-      <Pressable style={styles.fab} onPress={scrollToCurrentChapter}>
-        <Image source={require('@/assets/images/ui-locator-arrow-down.png')} style={styles.fabIcon} />
+      <Pressable style={styles.fab} onPress={scrollToCurrentLesson}>
+        <Image
+          source={
+            activeChapterId === chapters[0]?.id
+              ? require('@/assets/images/ui-locator-arrow-down.png')
+              : require('@/assets/images/ui-locator-arrow-up.png')
+          }
+          style={styles.fabIcon}
+        />
       </Pressable>
 
       <NodePopover
@@ -246,8 +280,13 @@ const styles = StyleSheet.create({
   },
   starCount: { color: colors.text, fontWeight: '700', fontSize: 15 },
   starIcon: { width: 18, height: 18 },
-  scroll: { paddingBottom: 140, paddingTop: spacing.xs },
-  nodeRow: { marginBottom: spacing.xs },
+  scroll: { paddingBottom: 160, paddingTop: spacing.xs },
+  chapterGap: { marginTop: spacing.xl },
+  nodeRow: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
   sectionRow: {
     flexDirection: 'row',
     alignItems: 'center',
