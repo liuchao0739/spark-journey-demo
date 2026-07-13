@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -33,6 +33,7 @@ export default function JourneyScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const chapterAnchors = useRef<Record<number, number>>({});
   const activeChapterRef = useRef(1);
+  const lastScrollY = useRef(0);
 
   const [chapters, setChapters] = useState<JourneyChapter[]>([]);
   const [activeChapterId, setActiveChapterId] = useState(1);
@@ -99,10 +100,12 @@ export default function JourneyScreen() {
     (scrollY: number) => {
       if (chapters.length === 0) return;
 
+      const probeY = scrollY + SCROLL_SWITCH_OFFSET;
       let nextId = chapters[0].id;
+
       for (const ch of chapters) {
-        const y = chapterAnchors.current[ch.id] ?? 0;
-        if (y <= scrollY + SCROLL_SWITCH_OFFSET) nextId = ch.id;
+        const y = chapterAnchors.current[ch.id];
+        if (y !== undefined && y <= probeY) nextId = ch.id;
       }
 
       if (nextId !== activeChapterRef.current) {
@@ -114,11 +117,20 @@ export default function JourneyScreen() {
   );
 
   const onJourneyScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    syncChapterByScroll(e.nativeEvent.contentOffset.y);
+    lastScrollY.current = e.nativeEvent.contentOffset.y;
+    syncChapterByScroll(lastScrollY.current);
   };
 
   const registerChapterAnchor = (chapterId: number) => (e: LayoutChangeEvent) => {
-    chapterAnchors.current[chapterId] = e.nativeEvent.layout.y;
+    const y = e.nativeEvent.layout.y;
+    if (chapterAnchors.current[chapterId] !== y) {
+      chapterAnchors.current[chapterId] = y;
+      syncChapterByScroll(lastScrollY.current);
+    }
+  };
+
+  const onJourneyContentSizeChange = () => {
+    syncChapterByScroll(lastScrollY.current);
   };
 
   const openLesson = (lesson: JourneyLesson) => {
@@ -182,42 +194,54 @@ export default function JourneyScreen() {
         refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.primary} />}
         showsVerticalScrollIndicator={false}
         onScroll={onJourneyScroll}
+        onMomentumScrollEnd={onJourneyScroll}
+        onContentSizeChange={onJourneyContentSizeChange}
         scrollEventThrottle={16}
       >
-        {chapterBlocks.map(({ ch, chapterIdx, startIndex }) => (
-          <View
-            key={ch.id}
-            onLayout={registerChapterAnchor(ch.id)}
-            style={chapterIdx > 0 ? styles.chapterGap : undefined}
-          >
-            {ch.lessons.map((lesson, lessonIdx) => {
-              const globalIndex = startIndex + lessonIdx;
-              const section = ch.sections.find((s) => s.afterLessonOrder === lesson.sortOrder);
+        {chapterBlocks.flatMap(({ ch, chapterIdx, startIndex }) => {
+          const rows: ReactNode[] = [];
 
-              return (
-                <View key={lesson.id}>
-                  <View style={[styles.nodeRow, { paddingHorizontal: pathMaxOffset(screenWidth) + 8 }]}>
-                    <Pressable onPress={() => openLesson(lesson)}>
-                      <LessonNode
-                        status={lesson.status}
-                        type={lesson.type}
-                        isCurrent={lesson.id === currentLessonId && lesson.status !== 'locked'}
-                        translateX={pathTranslateX(globalIndex, screenWidth)}
-                      />
-                    </Pressable>
-                  </View>
-                  {section && (
-                    <View style={styles.sectionRow}>
-                      <View style={styles.sectionLine} />
-                      <Text style={styles.sectionText}>{section.title}</Text>
-                      <View style={styles.sectionLine} />
-                    </View>
-                  )}
+          if (chapterIdx > 0) {
+            rows.push(<View key={`gap-${ch.id}`} style={styles.chapterGap} />);
+          }
+
+          rows.push(
+            <View
+              key={`anchor-${ch.id}`}
+              style={styles.chapterAnchor}
+              onLayout={registerChapterAnchor(ch.id)}
+            />,
+          );
+
+          ch.lessons.forEach((lesson, lessonIdx) => {
+            const globalIndex = startIndex + lessonIdx;
+            const section = ch.sections.find((s) => s.afterLessonOrder === lesson.sortOrder);
+
+            rows.push(
+              <View key={lesson.id}>
+                <View style={[styles.nodeRow, { paddingHorizontal: pathMaxOffset(screenWidth) + 8 }]}>
+                  <Pressable onPress={() => openLesson(lesson)}>
+                    <LessonNode
+                      status={lesson.status}
+                      type={lesson.type}
+                      isCurrent={lesson.id === currentLessonId && lesson.status !== 'locked'}
+                      translateX={pathTranslateX(globalIndex, screenWidth)}
+                    />
+                  </Pressable>
                 </View>
-              );
-            })}
-          </View>
-        ))}
+                {section && (
+                  <View style={styles.sectionRow}>
+                    <View style={styles.sectionLine} />
+                    <Text style={styles.sectionText}>{section.title}</Text>
+                    <View style={styles.sectionLine} />
+                  </View>
+                )}
+              </View>,
+            );
+          });
+
+          return rows;
+        })}
       </ScrollView>
 
       <Pressable style={styles.fab} onPress={scrollToCurrentLesson}>
@@ -267,7 +291,8 @@ const styles = StyleSheet.create({
   starCount: { color: colors.text, fontWeight: '700', fontSize: 15 },
   starIcon: { width: 18, height: 18 },
   scroll: { paddingBottom: 160, paddingTop: spacing.xs },
-  chapterGap: { marginTop: spacing.xl },
+  chapterGap: { height: spacing.xl },
+  chapterAnchor: { height: 1, width: '100%' },
   nodeRow: {
     width: '100%',
     alignItems: 'center',
