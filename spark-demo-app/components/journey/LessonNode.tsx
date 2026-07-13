@@ -1,4 +1,5 @@
-import { Image, ImageSourcePropType, StyleSheet, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Easing, Image, ImageSourcePropType, StyleSheet, View } from 'react-native';
 import type { LessonStatus } from '@/services/api';
 import { colors } from '@/constants/theme';
 
@@ -17,7 +18,41 @@ const assets = {
   iconLocked: require('@/assets/images/node-icon-locked.png'),
   bookCompleted: require('@/assets/images/node-book-completed.png'),
   bookPending: require('@/assets/images/node-book-pending.png'),
+  orbitStar: require('@/assets/images/ui-star-base.png'),
 };
+
+const NODE = 96;
+const ORBIT = NODE + 34;
+
+function OrbitStar() {
+  const rotation = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(rotation, {
+        toValue: 1,
+        duration: 2600,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [rotation]);
+
+  const spin = rotation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  return (
+    <Animated.View style={[styles.orbit, { transform: [{ rotate: spin }] }]} pointerEvents="none">
+      <View style={styles.orbitMarker}>
+        <Image source={assets.orbitStar} style={styles.orbitStarImg} resizeMode="contain" />
+      </View>
+    </Animated.View>
+  );
+}
 
 interface LessonNodeProps {
   status: LessonStatus;
@@ -44,7 +79,7 @@ export function LessonNode({ status, type, isCurrent, translateX = 0 }: LessonNo
 
   return (
     <View style={[styles.wrap, { transform: [{ translateX }] }]}>
-      {isCurrent && <View style={styles.sparkle} />}
+      {isCurrent && <OrbitStar />}
       <Image source={outer} style={styles.outer} resizeMode="contain" />
       <Image source={base} style={styles.base} resizeMode="contain" />
       <Image source={inner} style={styles.inner} resizeMode="contain" />
@@ -52,8 +87,6 @@ export function LessonNode({ status, type, isCurrent, translateX = 0 }: LessonNo
     </View>
   );
 }
-
-const NODE = 96;
 
 const styles = StyleSheet.create({
   wrap: {
@@ -63,20 +96,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginVertical: 16,
   },
+  orbit: {
+    position: 'absolute',
+    width: ORBIT,
+    height: ORBIT,
+    zIndex: 3,
+  },
+  orbitMarker: {
+    position: 'absolute',
+    top: 0,
+    left: ORBIT / 2 - 10,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#5ec8f2',
+    borderWidth: 2,
+    borderColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  orbitStarImg: {
+    width: 10,
+    height: 10,
+    tintColor: '#ffffff',
+  },
   outer: { position: 'absolute', width: NODE + 18, height: NODE + 18 },
   base: { position: 'absolute', width: NODE, height: NODE },
   inner: { position: 'absolute', width: NODE - 20, height: NODE - 20 },
   icon: { width: 30, height: 30 },
-  sparkle: {
-    position: 'absolute',
-    top: 2,
-    right: 20,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#4fc3f7',
-    zIndex: 2,
-    borderWidth: 2,
-    borderColor: colors.background,
-  },
 });
