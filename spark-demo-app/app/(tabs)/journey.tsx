@@ -14,7 +14,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChapterHeader, ChapterSheet, NodePopover } from '@/components/journey/JourneyComponents';
 import { LessonNode } from '@/components/journey/LessonNode';
-import { useApp } from '@/context/AppContext';
+import { useApp, useAppLocale } from '@/context/AppContext';
 import { api, JourneyChapter, JourneyLesson } from '@/services/api';
 import { colors, spacing } from '@/constants/theme';
 
@@ -30,7 +30,8 @@ const offsets: Array<'left' | 'center' | 'right'> = [
 
 export default function JourneyScreen() {
   const router = useRouter();
-  const { locale, ready } = useApp();
+  const { ready } = useApp();
+  const locale = useAppLocale();
   const scrollRef = useRef<ScrollView>(null);
 
   const [chapters, setChapters] = useState<JourneyChapter[]>([]);
@@ -62,6 +63,9 @@ export default function JourneyScreen() {
 
   useEffect(() => {
     if (!ready) return;
+    setChapters([]);
+    setSheetOpen(false);
+    setPopoverLesson(null);
     setLoading(true);
     void load();
   }, [locale, ready, load]);
@@ -108,7 +112,7 @@ export default function JourneyScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView key={locale} style={styles.container} edges={['top']}>
       <View style={styles.topBar}>
         <View />
         <View style={styles.starBadge}>

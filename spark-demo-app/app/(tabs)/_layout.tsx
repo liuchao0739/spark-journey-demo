@@ -37,10 +37,11 @@ function TabIcon({ name, focused }: { name: string; focused: boolean }) {
 }
 
 export default function TabLayout() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   return (
     <Tabs
+      key={i18n.language}
       screenOptions={{
         headerShown: false,
         tabBarStyle: {

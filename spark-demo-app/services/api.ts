@@ -67,6 +67,7 @@ async function request<T>(path: string, options: RequestInit & { locale?: string
 
   const res = await fetch(url, {
     ...rest,
+    cache: 'no-store',
     headers: {
       'Content-Type': 'application/json',
       'Accept-Language': loc,
@@ -82,9 +83,9 @@ async function request<T>(path: string, options: RequestInit & { locale?: string
 }
 
 export const api = {
-  getJourney: (locale: string) => request<JourneyData>(`/journey?locale=${locale}`),
+  getJourney: (locale: string) => request<JourneyData>('/journey', { locale }),
   getLesson: (id: number, locale: string) =>
-    request<LessonDetail>(`/lessons/${id}?locale=${locale}`),
+    request<LessonDetail>(`/lessons/${id}`, { locale }),
   completeLesson: (id: number, rating: number, locale: string) =>
     request<{ stars: number; unlockedLessonId: number | null }>(`/lessons/${id}/complete`, {
       method: 'POST',
@@ -97,6 +98,5 @@ export const api = {
       body: JSON.stringify({ locale }),
       locale,
     }),
-  getProfile: (locale: string) =>
-    request<{ stars: number; locale: string }>(`/user/profile?locale=${locale}`),
+  getProfile: (locale: string) => request<{ stars: number; locale: string }>('/user/profile', { locale }),
 };

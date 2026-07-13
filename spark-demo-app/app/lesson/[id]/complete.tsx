@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { StarRating } from '@/components/lesson/LessonComponents';
-import { useApp } from '@/context/AppContext';
+import { useAppLocale } from '@/context/AppContext';
 import { api } from '@/services/api';
 import { colors, spacing } from '@/constants/theme';
 
@@ -12,7 +12,7 @@ export default function LessonCompleteScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { t } = useTranslation();
-  const { locale } = useApp();
+  const locale = useAppLocale();
   const [rating, setRating] = useState(5);
   const [submitting, setSubmitting] = useState(false);
 

@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { LessonTopBar } from '@/components/lesson/LessonComponents';
-import { useApp } from '@/context/AppContext';
+import { useApp, useAppLocale } from '@/context/AppContext';
 import { api, LessonDetail } from '@/services/api';
 import { colors, spacing } from '@/constants/theme';
 
@@ -12,7 +12,8 @@ export default function LessonIntroScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { t } = useTranslation();
-  const { locale, fontSize } = useApp();
+  const { fontSize } = useApp();
+  const locale = useAppLocale();
   const [lesson, setLesson] = useState<LessonDetail | null>(null);
 
   useEffect(() => {

@@ -2,14 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useApp } from '@/context/AppContext';
+import { useApp, useAppLocale } from '@/context/AppContext';
 import { AppLocale } from '@/utils/locale';
 import { api } from '@/services/api';
 import { colors, spacing } from '@/constants/theme';
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
-  const { locale, setLocale } = useApp();
+  const { setLocale } = useApp();
+  const locale = useAppLocale();
   const [stars, setStars] = useState(0);
 
   const load = useCallback(async () => {

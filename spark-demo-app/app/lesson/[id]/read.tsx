@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { LessonTopBar } from '@/components/lesson/LessonComponents';
 import { LessonRevealContent } from '@/components/lesson/RevealContent';
-import { useApp } from '@/context/AppContext';
+import { useApp, useAppLocale } from '@/context/AppContext';
 import { api, LessonDetail } from '@/services/api';
 import { colors, spacing } from '@/constants/theme';
 import { splitContentPages } from '@/utils/locale';
@@ -25,7 +25,8 @@ export default function LessonReadScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { t } = useTranslation();
-  const { locale, fontSize, cycleFontScale } = useApp();
+  const { fontSize, cycleFontScale } = useApp();
+  const locale = useAppLocale();
   const scrollRef = useRef<ScrollView>(null);
 
   const [lesson, setLesson] = useState<LessonDetail | null>(null);
