@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Chapter {
+  id        Int      @id @default(autoincrement())
+  sortOrder Int      @map("sort_order")
+  slug      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  translations ChapterTranslation[]
+  lessons      Lesson[]
+
+  @@map("chapters")
+}
+
+model ChapterTranslation {
+  id          Int     @id @default(autoincrement())
+  chapterId   Int     @map("chapter_id")
+  locale      String
+  title       String
+  label       String
+  description String?
+  bullets     String
+
+  chapter Chapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@unique([chapterId, locale])
+  @@map("chapter_translations")
+}
+
+model Lesson {
+  id          Int      @id @default(autoincrement())
+  chapterId   Int      @map("chapter_id")
+  sortOrder   Int      @map("sort_order")
+  type        String
+  durationMin Int      @default(3) @map("duration_min")
+  starReward  Int      @default(1) @map("star_reward")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  chapter      Chapter              @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  translations LessonTranslation[]
+  progress     UserLessonProgress[]
+
+  @@map("lessons")
+}
+
+model LessonTranslation {
+  id       Int    @id @default(autoincrement())
+  lessonId Int    @map("lesson_id")
+  locale   String
+  title    String
+  subtitle String?
+  content  String
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, locale])
+  @@map("lesson_translations")
+}
+
+model UserProfile {
+  id        Int      @id @default(1)
+  stars     Int      @default(0)
+  locale    String   @default("en-US")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  progress UserLessonProgress[]
+
+  @@map("user_profile")
+}
+
+model UserLessonProgress {
+  id          Int       @id @default(autoincrement())
+  userId      Int       @default(1) @map("user_id")
+  lessonId    Int       @map("lesson_id")
+  status      String
+  rating      Int?
+  completedAt DateTime? @map("completed_at")
+
+  user   UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson      @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@map("user_lesson_progress")
+}

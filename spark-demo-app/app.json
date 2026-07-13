@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Spark Demo",
+    "slug": "spark-demo-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/ui-avatar-large.png",
+    "scheme": "sparkdemo",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/ui-plan-image.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a1a1a"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yizhiqu.sparkdemo"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/ui-avatar-large.png",
+        "backgroundColor": "#1a1a1a"
+      },
+      "package": "com.yizhiqu.sparkdemo"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/ui-star.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-localization",
+      "expo-asset",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "apiUrl": "http://localhost:3000/api/v1"
+    }
+  }
+}
