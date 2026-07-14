@@ -13,6 +13,7 @@ yizhiqu-demo/
 ├── docs/开发计划书.md      # 一测交付：开发计划书
 ├── docs/录屏脚本.md        # 二测录屏分镜脚本
 ├── docs/录屏文件.mp4       # 二测交付：Demo 运行录屏成片
+├── docs/spark-demo.apk     # 二测交付：Android APK
 ├── spark-demo-api/         # 后端 Express + Prisma + SQLite
 └── spark-demo-app/         # 前端 Expo React Native
 ```
@@ -73,17 +74,30 @@ npm run export:web
 
 ### APK
 
+仓库已附带可安装包：[`docs/spark-demo.apk`](docs/spark-demo.apk)（约 68MB）。
+
+**本地重新打包**（需 Android SDK，已验证）：
+
 ```bash
-npm install -g eas-cli
 cd spark-demo-app
-eas build --platform android --profile preview
+npx expo prebuild --platform android
+cd android && ./gradlew assembleRelease
+cp app/build/outputs/apk/release/app-release.apk ../../docs/spark-demo.apk
 ```
 
-或使用本地构建：
+也可使用 EAS 云端（需先 `npx eas-cli login`）：
 
 ```bash
-npx expo run:android
+cd spark-demo-app
+npx eas-cli build --platform android --profile preview
 ```
+
+配置见 `spark-demo-app/eas.json`（preview 产物为 apk）。
+
+**联调说明**：
+
+- 模拟器默认 API：`http://10.0.2.2:3000/api/v1`（需本机后端已启动）
+- 真机：在 `app.json` 设置 `extra.apiUrl` 为本机局域网地址后重新打包
 
 ### 后端 Docker
 
@@ -99,6 +113,7 @@ docker run -p 3000:3000 spark-demo-api
 |------|------|
 | 分镜脚本 | [`docs/录屏脚本.md`](docs/录屏脚本.md) |
 | 成片（二测提交） | [`docs/录屏文件.mp4`](docs/录屏文件.mp4) |
+| Android APK | [`docs/spark-demo.apk`](docs/spark-demo.apk) |
 
 建议时长 4–6 分钟；按脚本录制后成片已放入仓库 `docs/`。
 

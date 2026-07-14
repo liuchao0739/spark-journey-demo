@@ -9,3 +9,6 @@ npm-debug.log*
 
 # Keep package-lock
 !package-lock.json
+
+# Global ~/gitignore may ignore *.apk — allow the delivery artifact
+!docs/spark-demo.apk

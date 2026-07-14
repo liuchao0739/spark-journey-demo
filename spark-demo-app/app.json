@@ -22,7 +22,8 @@
         "foregroundImage": "./assets/images/ui-avatar-large.png",
         "backgroundColor": "#1a1a1a"
       },
-      "package": "com.yizhiqu.sparkdemo"
+      "package": "com.yizhiqu.sparkdemo",
+      "usesCleartextTraffic": true
     },
     "web": {
       "bundler": "metro",
@@ -37,9 +38,6 @@
     ],
     "experiments": {
       "typedRoutes": true
-    },
-    "extra": {
-      "apiUrl": "http://localhost:3000/api/v1"
     }
   }
 }
