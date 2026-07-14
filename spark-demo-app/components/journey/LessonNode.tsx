@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, Image, ImageSourcePropType, StyleSheet, View } from 'react-native';
 import type { LessonStatus } from '@/services/api';
-import { colors } from '@/constants/theme';
 
 const assets = {
   active: require('@/assets/images/node-base-active.png'),
@@ -18,38 +17,82 @@ const assets = {
   iconLocked: require('@/assets/images/node-icon-locked.png'),
   bookCompleted: require('@/assets/images/node-book-completed.png'),
   bookPending: require('@/assets/images/node-book-pending.png'),
-  orbitStar: require('@/assets/images/ui-star-base.png'),
 };
 
 const NODE = 96;
-const ORBIT = NODE + 34;
 
-function OrbitStar() {
+/** 参考 demo：节点顶部一小簇大小不一的星星，小范围自转闪烁 */
+function SparkleCluster() {
   const rotation = useRef(new Animated.Value(0)).current;
+  const pulse = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const loop = Animated.loop(
+    const spinLoop = Animated.loop(
       Animated.timing(rotation, {
         toValue: 1,
-        duration: 2600,
+        duration: 3200,
         easing: Easing.linear,
         useNativeDriver: true,
       }),
     );
-    loop.start();
-    return () => loop.stop();
-  }, [rotation]);
+    const pulseLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 900,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 0,
+          duration: 900,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    spinLoop.start();
+    pulseLoop.start();
+    return () => {
+      spinLoop.stop();
+      pulseLoop.stop();
+    };
+  }, [rotation, pulse]);
 
   const spin = rotation.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
 
+  const mainOpacity = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.75, 1],
+  });
+  const sideOpacity = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0.55],
+  });
+  const mainScale = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.9, 1.08],
+  });
+
   return (
-    <Animated.View style={[styles.orbit, { transform: [{ rotate: spin }] }]} pointerEvents="none">
-      <View style={styles.orbitMarker}>
-        <Image source={assets.orbitStar} style={styles.orbitStarImg} resizeMode="contain" />
-      </View>
+    <Animated.View
+      style={[styles.cluster, { transform: [{ rotate: spin }] }]}
+      pointerEvents="none"
+    >
+      <Animated.View
+        style={[
+          styles.sparkleMain,
+          { opacity: mainOpacity, transform: [{ scale: mainScale }] },
+        ]}
+      >
+        <View style={styles.starArmV} />
+        <View style={styles.starArmH} />
+      </Animated.View>
+      <Animated.View style={[styles.sparkleDot, styles.dotTopRight, { opacity: sideOpacity }]} />
+      <Animated.View style={[styles.sparkleDot, styles.dotBottom, { opacity: mainOpacity }]} />
     </Animated.View>
   );
 }
@@ -79,7 +122,7 @@ export function LessonNode({ status, type, isCurrent, translateX = 0 }: LessonNo
 
   return (
     <View style={[styles.wrap, { transform: [{ translateX }] }]}>
-      {isCurrent && <OrbitStar />}
+      {isCurrent && <SparkleCluster />}
       <Image source={outer} style={styles.outer} resizeMode="contain" />
       <Image source={base} style={styles.base} resizeMode="contain" />
       <Image source={inner} style={styles.inner} resizeMode="contain" />
@@ -96,29 +139,52 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginVertical: 16,
   },
-  orbit: {
+  cluster: {
     position: 'absolute',
-    width: ORBIT,
-    height: ORBIT,
+    top: -2,
+    right: 14,
+    width: 28,
+    height: 28,
     zIndex: 3,
-  },
-  orbitMarker: {
-    position: 'absolute',
-    top: 0,
-    left: ORBIT / 2 - 10,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#5ec8f2',
-    borderWidth: 2,
-    borderColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  orbitStarImg: {
-    width: 10,
-    height: 10,
-    tintColor: '#ffffff',
+  sparkleMain: {
+    width: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  starArmV: {
+    position: 'absolute',
+    width: 4,
+    height: 14,
+    borderRadius: 2,
+    backgroundColor: '#5ec8f2',
+  },
+  starArmH: {
+    position: 'absolute',
+    width: 14,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#5ec8f2',
+  },
+  sparkleDot: {
+    position: 'absolute',
+    backgroundColor: '#7dd3f5',
+    borderRadius: 5,
+  },
+  dotTopRight: {
+    width: 6,
+    height: 6,
+    top: 1,
+    right: 0,
+  },
+  dotBottom: {
+    width: 4,
+    height: 4,
+    bottom: 2,
+    left: 2,
   },
   outer: { position: 'absolute', width: NODE + 18, height: NODE + 18 },
   base: { position: 'absolute', width: NODE, height: NODE },
