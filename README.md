@@ -14,6 +14,7 @@ yizhiqu-demo/
 ├── docs/录屏脚本.md        # 二测录屏分镜脚本
 ├── docs/录屏文件.mp4       # 二测交付：Demo 运行录屏成片
 ├── docs/spark-demo.apk     # 二测交付：Android APK
+├── docs/面试问答备忘.md    # 面试问答提纲
 ├── spark-demo-api/         # 后端 Express + Prisma + SQLite
 └── spark-demo-app/         # 前端 Expo React Native
 ```
@@ -116,6 +117,10 @@ docker run -p 3000:3000 spark-demo-api
 | Android APK | [`docs/spark-demo.apk`](docs/spark-demo.apk) |
 
 建议时长 4–6 分钟；按脚本录制后成片已放入仓库 `docs/`。
+
+## 面试准备
+
+围绕本 Demo 的问答提纲见 [`docs/面试问答备忘.md`](docs/面试问答备忘.md)（开场介绍、架构/前后端深挖、AI 协作、反问清单、演示 Checklist）。
 
 ## 已知限制
 
