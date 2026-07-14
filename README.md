@@ -12,6 +12,7 @@ Spark 疗愈旅程 App — 开发计划书 + 可运行 Demo
 yizhiqu-demo/
 ├── docs/开发计划书.md      # 一测交付：开发计划书
 ├── docs/录屏脚本.md        # 二测录屏分镜脚本
+├── docs/录屏文件.mp4       # 二测交付：Demo 运行录屏成片
 ├── spark-demo-api/         # 后端 Express + Prisma + SQLite
 └── spark-demo-app/         # 前端 Expo React Native
 ```
@@ -94,7 +95,12 @@ docker run -p 3000:3000 spark-demo-api
 
 ## 录屏
 
-详细分镜脚本见 [`docs/录屏脚本.md`](docs/录屏脚本.md)，建议时长 4–6 分钟。
+| 材料 | 路径 |
+|------|------|
+| 分镜脚本 | [`docs/录屏脚本.md`](docs/录屏脚本.md) |
+| 成片（二测提交） | [`docs/录屏文件.mp4`](docs/录屏文件.mp4) |
+
+建议时长 4–6 分钟；按脚本录制后成片已放入仓库 `docs/`。
 
 ## 已知限制
 
